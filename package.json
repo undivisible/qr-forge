@@ -10,12 +10,13 @@
     "preview": "moonshine preview"
   },
   "dependencies": {
-    "@tschk/moonshine": "file:/Users/undivisible/projects/moonshine/packages/core",
-    "@tschk/moonshine-compiler": "file:/Users/undivisible/projects/moonshine/packages/compiler",
-    "@tschk/moonshine-deploy-cloudflare": "file:/Users/undivisible/projects/moonshine/packages/deploy-cloudflare",
-    "@tschk/moonshine-framework": "file:/Users/undivisible/projects/moonshine/packages/framework",
-    "@tschk/moonshine-react": "file:/Users/undivisible/projects/moonshine/packages/react",
-    "@tschk/moonshine-server": "file:/Users/undivisible/projects/moonshine/packages/server",
+    "@tschk/moonshine": "^0.3.7",
+    "@tschk/moonshine-deploy-cloudflare": "^0.3.7",
+    "@tschk/moonshine-framework": "^0.3.7",
+    "@tschk/moonshine-react": "^0.3.7",
+    "@tschk/moonshine-server": "^0.3.7",
+    "@unocss/core": "^66.8.1",
+    "@unocss/preset-wind3": "^66.8.1",
     "qr-code-styling": "^1.9.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
