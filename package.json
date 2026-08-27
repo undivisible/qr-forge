@@ -1,0 +1,30 @@
+{
+  "name": "qr-forge",
+  "private": true,
+  "license": "ISC",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "moonshine build",
+    "dev": "moonshine dev",
+    "preview": "moonshine preview"
+  },
+  "dependencies": {
+    "@tschk/moonshine": "file:/Users/undivisible/projects/moonshine/packages/core",
+    "@tschk/moonshine-compiler": "file:/Users/undivisible/projects/moonshine/packages/compiler",
+    "@tschk/moonshine-deploy-cloudflare": "file:/Users/undivisible/projects/moonshine/packages/deploy-cloudflare",
+    "@tschk/moonshine-framework": "file:/Users/undivisible/projects/moonshine/packages/framework",
+    "@tschk/moonshine-react": "file:/Users/undivisible/projects/moonshine/packages/react",
+    "@tschk/moonshine-server": "file:/Users/undivisible/projects/moonshine/packages/server",
+    "qr-code-styling": "^1.9.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tschk/moonshine-cli": "^0.3.7",
+    "@types/bun": "^1.3.14",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "~5.9.3"
+  }
+}
