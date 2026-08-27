@@ -36,6 +36,75 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
+const SHAPES = ["square", "rounded", "squircle", "circle"] as const;
+type Shape = (typeof SHAPES)[number];
+
+const SHAPE_RADIUS: Record<Shape, (s: number) => string> = {
+  square: () => "0px",
+  rounded: (s) => `${Math.round(s * 0.12)}px`,
+  squircle: (s) => `${Math.round(s * 0.24)}px`,
+  circle: () => "50%",
+};
+
+function maskCanvas(
+  source: HTMLCanvasElement | HTMLImageElement,
+  size: number,
+  shape: Shape,
+  border: string | null,
+): HTMLCanvasElement {
+  const out = document.createElement("canvas");
+  out.width = size;
+  out.height = size;
+  const ctx = out.getContext("2d")!;
+  ctx.beginPath();
+  const r = SHAPE_RADIUS[shape](size);
+  if (shape === "circle") {
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+  } else {
+    ctx.roundRect(0, 0, size, size, parseFloat(r));
+  }
+  ctx.clip();
+  ctx.drawImage(source, 0, 0, size, size);
+  if (border) {
+    ctx.lineWidth = Math.max(4, Math.round(size * 0.01));
+    ctx.strokeStyle = border;
+    const inset = ctx.lineWidth / 2;
+    ctx.beginPath();
+    if (shape === "circle") {
+      ctx.arc(size / 2, size / 2, size / 2 - inset, 0, Math.PI * 2);
+    } else {
+      ctx.roundRect(inset, inset, size - ctx.lineWidth, size - ctx.lineWidth, Math.max(0, parseFloat(r) - inset));
+    }
+    ctx.stroke();
+  }
+  return out;
+}
+
+async function maskSvg(blob: Blob, size: number, shape: Shape, border: string | null): Promise<Blob> {
+  let text = await blob.text();
+  if (shape === "square" && !border) return blob;
+  const rx = parseFloat(SHAPE_RADIUS[shape](size));
+  const clip =
+    shape === "circle"
+      ? `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}"/>`
+      : `<rect width="${size}" height="${size}" rx="${rx}"/>`;
+  text = text.replace(
+    /(<svg[^>]*>)/,
+    `$1<defs><clipPath id="cforge-clip">${clip}</clipPath></defs><g clip-path="url(#cforge-clip)">`,
+  );
+  let closing = "</g>";
+  if (border) {
+    const half = size / 2;
+    const strokeShape =
+      shape === "circle"
+        ? `<circle cx="${half}" cy="${half}" r="${half - 1}" fill="none" stroke="${border}" stroke-width="2"/>`
+        : `<rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="${Math.max(0, rx - 1)}" fill="none" stroke="${border}" stroke-width="2"/>`;
+    closing += strokeShape;
+  }
+  text = text.replace(/<\/svg>/, `${closing}</svg>`);
+  return new Blob([text], { type: "image/svg+xml" });
+}
+
 export default function Studio() {
   const [fg, setFg] = useState("#bd93f9");
   const [bg, setBg] = useState("#282a36");
@@ -44,6 +113,8 @@ export default function Studio() {
   const [frame, setFrame] = useState<CornerSquareType>("extra-rounded");
   const [ball, setBall] = useState<CornerDotType>("dot");
   const [ecc, setEcc] = useState<(typeof ECC)[number]>("Q");
+  const [shape, setShape] = useState<Shape>("squircle");
+  const [border, setBorder] = useState(false);
   const [size, setSize] = useState(360);
   const [margin, setMargin] = useState(24);
   const [logo, setLogo] = useState<string | undefined>();
@@ -117,7 +188,26 @@ export default function Studio() {
   async function save(ext: FileExtension) {
     const raw = await exporter.current!.getRawData(ext);
     if (!raw) return;
-    const blob = raw instanceof Blob ? raw : new Blob([raw as unknown as BlobPart]);
+    let blob =
+      raw instanceof Blob ? raw : new Blob([raw as unknown as BlobPart]);
+    if (ext === "png" || ext === "jpeg") {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      await new Promise((res, rej) => {
+        img.onload = res;
+        img.onerror = rej;
+        img.src = url;
+      });
+      URL.revokeObjectURL(url);
+      const masked = maskCanvas(img, size, shape, border ? fg : null);
+      const out = await new Promise<Blob | null>((res) =>
+        masked.toBlob(res, `image/${ext}`, 0.92),
+      );
+      if (!out) return;
+      blob = out;
+    } else if (ext === "svg") {
+      blob = await maskSvg(blob, size, shape, border ? fg : null);
+    }
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `qr-forge.${ext}`;
@@ -161,7 +251,20 @@ export default function Studio() {
 
         {/* preview */}
         <div className="flex justify-center">
-          <div ref={canvasHost} className="checker rounded-[32px] p-6 shadow-2xl shadow-black/40" />
+          <div
+            ref={canvasHost}
+            className="checker p-6 shadow-2xl shadow-black/40"
+            style={{
+              borderRadius: SHAPE_RADIUS[shape](size),
+              overflow: "hidden",
+              boxShadow: border
+                ? "0 25px 50px -12px rgb(0 0 0 / 0.4), 0 0 0 2px currentColor"
+                : "0 25px 50px -12px rgb(0 0 0 / 0.4)",
+              color: fg,
+              transition:
+                "border-radius 250ms cubic-bezier(0.4,0,0.2,1), box-shadow 150ms",
+            }}
+          />
         </div>
 
         {/* payload */}
@@ -190,6 +293,14 @@ export default function Studio() {
               setClear(false);
             }}
           />
+
+          <Row label="shape">
+            <Segmented value={shape} onChange={(v) => setShape(v as Shape)} options={SHAPES} />
+            <div className="flex items-center gap-3 mt-2">
+              <Toggle on={border} onChange={setBorder}>border</Toggle>
+              <span className="text-[10px] text-comment/70">hairline ring in ink color</span>
+            </div>
+          </Row>
 
           <Row label="pattern">
             <Segmented value={dots} onChange={(v) => setDots(v as DotType)} options={DOTS} />
@@ -339,6 +450,11 @@ function ColorRow(props: {
   value: string;
   onChange: (v: string) => void;
 }) {
+  const [draft, setDraft] = useState(props.value.replace("#", "").toUpperCase());
+  const dirty = useRef(false);
+  if (!dirty.current && props.value.replace("#", "").toUpperCase() !== draft) {
+    setDraft(props.value.replace("#", "").toUpperCase());
+  }
   return (
     <div className="flex items-center gap-3">
       <label
@@ -349,16 +465,24 @@ function ColorRow(props: {
         <input
           type="color"
           value={props.value}
-          onChange={(e) => props.onChange(e.target.value)}
+          onChange={(e) => {
+            dirty.current = false;
+            props.onChange(e.target.value);
+          }}
           className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] cursor-pointer opacity-0"
         />
       </label>
       <span className="text-[11px] text-comment w-12">{props.label}</span>
       <input
-        value={props.value.replace("#", "").toUpperCase()}
+        value={draft}
         onChange={(e) => {
           const v = e.target.value.trim().replace("#", "");
-          if (/^[0-9a-fA-F]{6}$/.test(v)) props.onChange(`#${v.toUpperCase()}`);
+          setDraft(v.toUpperCase());
+          dirty.current = true;
+          if (/^[0-9a-fA-F]{6}$/.test(v)) {
+            props.onChange(`#${v.toUpperCase()}`);
+            dirty.current = false;
+          }
         }}
         maxLength={6}
         spellCheck={false}
