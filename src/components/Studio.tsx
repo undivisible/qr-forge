@@ -206,12 +206,14 @@ export default function Studio() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <Sub>ink &amp; paper</Sub>
-            <div className="flex items-center gap-3">
-              <ColorDot value={fg} onChange={setFg} title="ink" />
-              <ColorDot value={bg} onChange={setBg} title="paper" dim={clear} />
-              <Toggle on={clear} onChange={setClear}>clear</Toggle>
+          <div className="flex flex-col gap-3">
+            <ColorRow label="ink" value={fg} onChange={setFg} />
+            <div className={clear ? "opacity-40 transition-opacity" : "transition-opacity"}>
+              <ColorRow label="paper" value={bg} onChange={setBg} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-comment/70">no background at all →</span>
+              <Toggle on={clear} onChange={setClear}>transparent</Toggle>
             </div>
           </div>
         </section>
@@ -332,22 +334,38 @@ function Swatches(props: { onPick: (fg: string, bg: string) => void }) {
   );
 }
 
-function ColorDot(props: { value: string; onChange: (v: string) => void; title: string; dim?: boolean }) {
+function ColorRow(props: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
-    <label
-      title={props.title}
-      className={`relative w-7 h-7 rounded-full overflow-hidden border border-panel cursor-pointer transition-transform active:scale-90 ${
-        props.dim ? "opacity-30 pointer-events-none" : ""
-      }`}
-      style={{ backgroundColor: props.value }}
-    >
+    <div className="flex items-center gap-3">
+      <label
+        title={props.label}
+        className="relative w-9 h-9 shrink-0 rounded-xl overflow-hidden border border-panel cursor-pointer transition-transform active:scale-90"
+        style={{ backgroundColor: props.value }}
+      >
+        <input
+          type="color"
+          value={props.value}
+          onChange={(e) => props.onChange(e.target.value)}
+          className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] cursor-pointer opacity-0"
+        />
+      </label>
+      <span className="text-[11px] text-comment w-12">{props.label}</span>
       <input
-        type="color"
-        value={props.value}
-        onChange={(e) => props.onChange(e.target.value)}
-        className="absolute inset-0 opacity-0 cursor-pointer scale-[2]"
+        value={props.value.replace("#", "").toUpperCase()}
+        onChange={(e) => {
+          const v = e.target.value.trim().replace("#", "");
+          if (/^[0-9a-fA-F]{6}$/.test(v)) props.onChange(`#${v.toUpperCase()}`);
+        }}
+        maxLength={6}
+        spellCheck={false}
+        placeholder="000000"
+        className="flex-1 bg-panel/50 border border-panel rounded-xl px-3 py-1.5 text-[11px] font-mono tracking-widest text-fg placeholder:text-comment/50 outline-none focus:border-purple transition-colors uppercase"
       />
-    </label>
+    </div>
   );
 }
 
