@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "moonshine build",
+    "build": "moonshine build --adapter cloudflare",
     "dev": "moonshine dev",
     "preview": "moonshine preview"
   },
