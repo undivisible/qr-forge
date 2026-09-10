@@ -1,6 +1,7 @@
 {
   "name": "qr-forge",
   "private": true,
+  "description": "In-browser styled QR studio",
   "license": "ISC",
   "version": "0.0.0",
   "type": "module",
