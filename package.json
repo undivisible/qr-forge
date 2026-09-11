@@ -8,7 +8,8 @@
   "scripts": {
     "build": "moonshine build --adapter cloudflare",
     "dev": "moonshine dev",
-    "preview": "moonshine preview"
+    "preview": "moonshine preview",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@tschk/moonshine": "^0.4.0",
