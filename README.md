@@ -20,3 +20,4 @@ bun run dev
 | `bun run dev` | `moonshine dev` | local dev server |
 | `bun run build` | `moonshine build --adapter cloudflare` | production build into `.moonshine/` |
 | `bun run preview` | `moonshine preview` | serve that build locally |
+| `bun run typecheck` | `tsc --noEmit` | typecheck the source |

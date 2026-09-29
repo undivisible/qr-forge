@@ -1,8 +1,11 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "name": "qr-forge",
   "main": ".moonshine/server.ts",
   "compatibility_date": "2026-08-27",
+  "routes": [
+    { "pattern": "qr.undivisible.dev", "custom_domain": true }
+  ],
   "assets": {
     "directory": ".moonshine/public",
     "binding": "ASSETS"
@@ -11,3 +14,4 @@
     "enabled": true
   }
 }
+
